@@ -1,10 +1,10 @@
-package com.bootcamp.banc.current_account;
+package com.bootcamp.bank.current_account;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class CurrentAccountApplicationTests {
+class CurrentAccountEntityApplicationTests {
 
 	@Test
 	void contextLoads() {

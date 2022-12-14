@@ -1,0 +1,15 @@
+server:
+  port:9040
+spring:
+  application:
+    name:service-client
+spring:
+  data:
+    mongodb:
+      uri:mongodb://localhost:27017/bank_client
+      auto-index-creation:true
+logging:
+  level:
+    com:
+      bootcamp:
+        java:info

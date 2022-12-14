@@ -1,0 +1,23 @@
+spring:
+  application:
+    name:service-current-account
+
+server:
+  port:9043
+
+#Spring Data
+spring:
+  data:
+    mongodb:
+      uri:mongodb://localhost:27017/bank_current_account
+      auto-index-creation:true
+
+#Log
+logging:
+  level:
+    com:
+      bootcamp:
+        java:info
+
+uri:
+  client:http://localhost:9040

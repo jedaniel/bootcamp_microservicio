@@ -1,0 +1,23 @@
+spring:
+  application:
+    name:service-credit-card
+
+server:
+  port:9044
+
+#Spring Data
+spring:
+  data:
+    mongodb:
+      uri:mongodb://localhost:27017/bank_credit_card
+      auto-index-creation:true
+
+#Log
+logging:
+  level:
+    com:
+      bootcamp:
+        java:info
+
+uri:
+  client:http://localhost:9040

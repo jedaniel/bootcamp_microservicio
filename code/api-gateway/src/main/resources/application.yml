@@ -1,0 +1,42 @@
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${random.uuid}
+server:
+  port: 8080
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: service-credit
+          uri: lb://SERVICE-CREDIT
+          predicates:
+            - Path=/v1/credit/**
+        - id: service-credit-card
+          uri: lb://SERVICE-CREDIT-CARD
+          predicates:
+            - Path=/v1/credit_card/**
+        - id: service-current-account
+          uri: lb://SERVICE-CURRENT-ACCOUNT
+          predicates:
+            - Path=/v1/current_account/**
+        - id: service-fixed-account
+          uri: lb://SERVICE-FIXED-ACCOUNT
+          predicates:
+            - Path=/v1/fixed_account/**
+        - id: service-savings-account
+          uri: lb://SERVICE-SAVINGS-ACCOUNT
+          predicates:
+            - Path=/v1/saving_account/**
+        - id: service-client
+          uri: lb://SERVICE-CLIENT
+          predicates:
+            - Path=/v1/client/**
+      discovery:
+        locator:
+          enabled: true
+    loadbalancer:
+      ribbon:
+        enabled: false
+

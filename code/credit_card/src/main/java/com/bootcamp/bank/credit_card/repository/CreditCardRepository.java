@@ -10,4 +10,5 @@ import reactor.core.publisher.Mono;
 public interface CreditCardRepository extends ReactiveMongoRepository<CreditCardEntity, String> {
     Mono<CreditCardEntity> findByNumeroTarjetaAndEstado(String numeroTarjeta, String estado);
     Flux<CreditCardEntity> findByTipoDocumentoAndNumeroDocumentoAndEstado(String tipoDocumento, String numeroDocumento, String estado);
+    Mono<Boolean> existsByTipoDocumentoAndNumeroDocumentoAndEstado(String tipoDocumento, String numeroDocumento, String estado);
 }

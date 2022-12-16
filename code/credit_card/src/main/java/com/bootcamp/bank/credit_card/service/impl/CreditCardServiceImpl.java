@@ -123,4 +123,9 @@ public class CreditCardServiceImpl implements CreditCardService {
                             .flatMap(d -> Flux.just(creditCardMovMapper.toCreditCardMovDto(d)));
                 });
     }
+
+    @Override
+    public Mono<Boolean> existsClienteTarjeta(String tipoDocumento, String numeroDocumento) {
+        return creditCardRepository.existsByTipoDocumentoAndNumeroDocumentoAndEstado(tipoDocumento, numeroDocumento, "ACTIVO");
+    }
 }

@@ -49,4 +49,7 @@ public class ClientEntity {
     @Field("genero")
     private String genero;
 
+    @Field("perfil")
+    private String perfil;
+
 }

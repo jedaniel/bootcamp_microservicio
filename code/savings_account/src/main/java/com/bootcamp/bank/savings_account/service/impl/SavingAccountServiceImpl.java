@@ -21,6 +21,9 @@ import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClientRequest;
 
 import java.time.Duration;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class SavingAccountServiceImpl implements SavingAccountService {
@@ -81,35 +84,70 @@ public class SavingAccountServiceImpl implements SavingAccountService {
     }
 
     @Override
-    public Mono<SavingAccountMovDto> realizarTransaccion(String numeroCuenta, SavingAccountMovDto savingAccountMovDto) {
+    public Mono<List<SavingAccountMovDto>> realizarTransaccion(String numeroCuenta, SavingAccountMovDto savingAccountMovDto) {
         return savingAccountRepository.findByNumeroCuenta(numeroCuenta)
                 .switchIfEmpty(Mono.defer(() -> {
                     return Mono.error(() -> new CustomBusinessException("ACCOUNT_NOT_EXIST", "Cuenta no existe!!!"));
                 }))
                 .flatMap(c -> {
-                    if(c.getCantidadMovActual()>= c.getCantidadMovPermitido()){
-                        return Mono.error(() -> new CustomBusinessException("TRANSACTION_NOT_PERMITTED", "No se permite más movimientos!!!"));
-                    }
-                    SavingAccountMovEntity savingAccountMovEntity = savingAccountMovMapper.toSavingAccountMovEntity(savingAccountMovDto);
-                    savingAccountMovEntity.setIdSavingAccount(c.getId());
-                    return savingAccountMovRepository.save(savingAccountMovEntity)
-                            .flatMap(d -> {
-                                c.setCantidadMovActual(c.getCantidadMovActual() + 1);
-                                //Actualizar el saldo según el tipo de movimiento
-                                if (d.getTipoMovimiento().equals("DEPOSITO")) {
-                                    c.setSaldoDisponible(c.getSaldoDisponible() + d.getMontoMovimiento());
-                                } else if (d.getTipoMovimiento().equals("RETIRO")) {
-                                    if (c.getSaldoDisponible() - d.getMontoMovimiento() < 0) {
-                                        return Mono.error(() -> new CustomBusinessException("ERROR", "Saldo insuficiente!!!"));
-                                    } else {
-                                        c.setSaldoDisponible(c.getSaldoDisponible() - d.getMontoMovimiento());
-                                    }
+                    LocalDate date = LocalDate.now();
+                    double comision = c.getComision();
+                    //Obtener movimientos del mes en curso
+                    return savingAccountMovRepository.findByIdSavingAccountAndFechaMovimientoGreaterThan(c.getId(), date.minusDays(date.getDayOfMonth()))
+                            .count()
+                            .flatMap(e -> {
+                                if (e >= c.getCantidadMovPermitido()) {
+                                    return Mono.just(true);
+                                } else {
+                                    return Mono.just(false);
                                 }
-                                return savingAccountRepository.save(c)
-                                        .switchIfEmpty(Mono.defer(() -> {
-                                            return Mono.error(() -> new CustomBusinessException("ERROR", "No se actualizó saldo!!!"));
-                                        }))
-                                        .flatMap(e -> Mono.just(savingAccountMovMapper.toSavingAccountMovDto(d)));
+                            })
+                            .flatMap(f -> {
+                                SavingAccountMovEntity savingAccountMovEntity = savingAccountMovMapper.toSavingAccountMovEntity(savingAccountMovDto);
+                                savingAccountMovEntity.setIdSavingAccount(c.getId());
+                                return savingAccountMovRepository.save(savingAccountMovEntity)
+                                        .flatMap(d -> {
+                                            c.setCantidadMovActual(c.getCantidadMovActual() + 1);
+                                            //Actualizar el saldo según el tipo de movimiento
+                                            if (d.getTipoMovimiento().equals("DEPOSITO")) {
+                                                c.setSaldoDisponible(c.getSaldoDisponible() + d.getMontoMovimiento());
+                                            } else if (d.getTipoMovimiento().equals("RETIRO")) {
+                                                if (c.getSaldoDisponible() - d.getMontoMovimiento() < 0) {
+                                                    return Mono.error(() -> new CustomBusinessException("ERROR", "Saldo insuficiente!!!"));
+                                                } else {
+                                                    c.setSaldoDisponible(c.getSaldoDisponible() - d.getMontoMovimiento());
+                                                }
+                                            }
+
+                                            return savingAccountRepository.save(c)
+                                                    .switchIfEmpty(Mono.defer(() -> {
+                                                        return Mono.error(() -> new CustomBusinessException("ERROR", "No se actualizó saldo!!!"));
+                                                    }))
+                                                    .flatMap(g -> {
+                                                        //Aplicando comisión
+                                                        if (f) {
+                                                            SavingAccountMovEntity comisionEntity = new SavingAccountMovEntity();
+                                                            comisionEntity.setIdSavingAccount(c.getId());
+                                                            comisionEntity.setFechaMovimiento(LocalDate.now());
+                                                            comisionEntity.setTipoMovimiento("COMISION");
+                                                            comisionEntity.setMontoMovimiento(c.getComision() * d.getMontoMovimiento());
+                                                            return savingAccountMovRepository.save(comisionEntity)
+                                                                    .flatMap(h -> {
+                                                                        c.setSaldoDisponible(c.getSaldoDisponible() - c.getComision() * d.getMontoMovimiento());
+                                                                        return savingAccountRepository.save(c)
+                                                                                .flatMap(i -> {
+                                                                                    List<SavingAccountMovDto> listMovDto = new ArrayList<SavingAccountMovDto>();
+                                                                                    listMovDto.add(savingAccountMovMapper.toSavingAccountMovDto(h));
+                                                                                    listMovDto.add(savingAccountMovMapper.toSavingAccountMovDto(d));
+                                                                                    return Mono.just(listMovDto);
+                                                                                });
+                                                                    });
+                                                        }
+                                                        List<SavingAccountMovDto> listMovDto = new ArrayList<SavingAccountMovDto>();
+                                                        listMovDto.add(savingAccountMovMapper.toSavingAccountMovDto(d));
+                                                        return Mono.just(listMovDto);
+                                                    });
+                                        });
                             });
                 });
     }

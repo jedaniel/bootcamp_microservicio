@@ -37,6 +37,9 @@ public class SavingAccountEntity {
     @Field("cantidad_mov_permitido")
     private int cantidadMovPermitido;
 
+    @Field("comision")
+    private double comision;
+
     @Field("estado")
     private String estado;
 }

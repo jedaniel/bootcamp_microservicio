@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("v1/saving_account")
@@ -37,13 +38,10 @@ public class SavingAccountController {
     }
 
     @PostMapping("/transaction/{numeroCuenta}")
-    public Mono<ResponseEntity<SavingAccountMovDto>> transaction(@PathVariable String numeroCuenta, @Valid @RequestBody SavingAccountMovDto savingAccountMovDto) {
+    public Mono<ResponseEntity<List<SavingAccountMovDto>>> transaction(@PathVariable String numeroCuenta, @Valid @RequestBody SavingAccountMovDto savingAccountMovDto) {
         return savingAccountService.realizarTransaccion(numeroCuenta, savingAccountMovDto)
-                .flatMap(c -> Mono.just(ResponseEntity
-                        .created(URI.create(String.format("http://%s:%s/%s/%s", name, port, "saving_account", c.getId())))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(c)))
-                .defaultIfEmpty(ResponseEntity.notFound().build());
+                        .flatMap(c->Mono.just(ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(c)))
+                                .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/detail/{numeroCuenta}")

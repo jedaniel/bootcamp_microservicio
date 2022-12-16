@@ -34,6 +34,8 @@ public class SavingAccountDto {
 
     private int cantidadMovPermitido;
 
+    private double comision;
+
     private String estado;
 
 }

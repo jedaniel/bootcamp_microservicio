@@ -2,6 +2,7 @@ package com.bootcamp.bank.savings_account.controller;
 
 import com.bootcamp.bank.savings_account.dto.SavingAccountDto;
 import com.bootcamp.bank.savings_account.dto.SavingAccountMovDto;
+import com.bootcamp.bank.savings_account.dto.SavingAccountTransferenciaDto;
 import com.bootcamp.bank.savings_account.service.SavingAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +43,13 @@ public class SavingAccountController {
         return savingAccountService.realizarTransaccion(numeroCuenta, savingAccountMovDto)
                         .flatMap(c->Mono.just(ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(c)))
                                 .defaultIfEmpty(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/transferencia")
+    public Mono<ResponseEntity<SavingAccountMovDto>> transferencia(@RequestBody SavingAccountTransferenciaDto savingAccountTransferenciaDto) {
+        return savingAccountService.realizarTransferencia(savingAccountTransferenciaDto)
+                .flatMap(c->Mono.just(ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(c)))
+                .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/detail/{numeroCuenta}")
